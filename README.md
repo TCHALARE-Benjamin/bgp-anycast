@@ -148,20 +148,6 @@ A link failure (B1) has no slower baseline in this lab: FRR drops the session as
 
 **Illustration, with assumptions stated:** say a node fails 12 times a year. With DNS failover on a 300 s TTL that is 12 × 300 s = **60 minutes** of downtime a year (99.989% availability for that cause). With anycast and a ~2 s health check it is 12 × 2 s = **24 seconds** (99.99992%). Your assumptions will differ; the point is how much the recovery time matters.
 
-### Measured (my numbers)
-
-> Replace every `__` with a value from `scripts/analyze.py` before you publish. Gain = baseline ÷ measured; reduction = (baseline − measured) ÷ baseline.
-
-| Scenario | Baseline | Measured outage | Gain |
-|----------|----------|-----------------|------|
-| B0 traditional: address tied to n1 | never recovers | `__` | n/a |
-| B1 link down | n/a | `__` s | n/a |
-| B2 service dead, no health check | never recovers | `__` | n/a |
-| B3 service dead, health check running | B2 | `__` s | `__`× faster |
-| B4 silent failure, default timers (60 s keepalive / 180 s hold) | n/a | `__` s | n/a |
-| B4 silent failure, lowered timers (3 s / 9 s) | default timers | `__` s | `__`× faster, `__`% less downtime |
-| B4 silent failure, BFD (if I got to it) | default timers | `__` s | `__`× faster, `__`% less downtime |
-
 ### How I measured
 
 ```bash
