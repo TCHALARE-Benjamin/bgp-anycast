@@ -1,0 +1,68 @@
+name: anycast
+
+topology:
+  nodes:
+    client:
+      kind: linux
+      image: nicolaka/netshoot:latest
+      exec:
+        - ip addr add 10.0.0.2/24 dev eth1
+        - ip route replace default via 10.0.0.1
+
+    rc:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      binds:
+        - daemons:/etc/frr/daemons
+        - configs/rc.conf:/etc/frr/frr.conf
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - ip addr add 10.0.0.1/24 dev eth1
+        - ip addr add 10.0.1.1/30 dev eth2
+        - ip addr add 10.0.2.1/30 dev eth3
+        - ip addr add 10.0.3.1/30 dev eth4
+
+    n1:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      binds:
+        - daemons:/etc/frr/daemons
+        - configs/n1.conf:/etc/frr/frr.conf
+        - scripts/healthcheck.sh:/healthcheck.sh
+      exec:
+        - ip addr add 10.0.1.2/30 dev eth1
+        - ip addr add 10.99.99.99/32 dev lo
+        - sh -c 'mkdir -p /www && echo "served by n1" > /www/index.html'
+        - busybox httpd -p 80 -h /www
+
+    n2:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      binds:
+        - daemons:/etc/frr/daemons
+        - configs/n2.conf:/etc/frr/frr.conf
+        - scripts/healthcheck.sh:/healthcheck.sh
+      exec:
+        - ip addr add 10.0.2.2/30 dev eth1
+        - ip addr add 10.99.99.99/32 dev lo
+        - sh -c 'mkdir -p /www && echo "served by n2" > /www/index.html'
+        - busybox httpd -p 80 -h /www
+
+    n3:
+      kind: linux
+      image: quay.io/frrouting/frr:10.2.1
+      binds:
+        - daemons:/etc/frr/daemons
+        - configs/n3.conf:/etc/frr/frr.conf
+        - scripts/healthcheck.sh:/healthcheck.sh
+      exec:
+        - ip addr add 10.0.3.2/30 dev eth1
+        - ip addr add 10.99.99.99/32 dev lo
+        - sh -c 'mkdir -p /www && echo "served by n3" > /www/index.html'
+        - busybox httpd -p 80 -h /www
+
+  links:
+    - endpoints: ["client:eth1", "rc:eth1"]
+    - endpoints: ["rc:eth2", "n1:eth1"]
+    - endpoints: ["rc:eth3", "n2:eth1"]
+    - endpoints: ["rc:eth4", "n3:eth1"]
